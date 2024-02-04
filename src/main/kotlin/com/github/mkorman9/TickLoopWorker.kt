@@ -2,7 +2,6 @@ package com.github.mkorman9
 
 import jakarta.enterprise.context.ApplicationScoped
 import org.jboss.logging.Logger
-import java.time.Instant
 
 @ApplicationScoped
 class TickLoopWorker(
@@ -13,7 +12,7 @@ class TickLoopWorker(
         log.info("Worker started")
     }
 
-    fun onTick(lastTick: Instant) {
+    fun onTick() {
         log.info("Tick")
         ticksCounter.tick()
     }

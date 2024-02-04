@@ -8,10 +8,11 @@ import io.vertx.core.ThreadingModel
 import io.vertx.core.Vertx
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes
-import java.time.Instant
+import org.jboss.logging.Logger
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 
 @ApplicationScoped
 class TickLoopWorkerLifecycle(
@@ -42,11 +43,17 @@ class TickLoopWorkerVerticle(
     override fun start() {
         tickLoopWorker.onInit()
 
-        var lastTick = Instant.now()
         while (isRunning.get()) {
-            Thread.sleep(TICK_INTERVAL)
-            tickLoopWorker.onTick(lastTick)
-            lastTick = Instant.now()
+            val beforeTickTime = System.currentTimeMillis()
+            tickLoopWorker.onTick()
+            val tickTime = System.currentTimeMillis() - beforeTickTime
+            val lagTime = TICK_INTERVAL - tickTime
+
+            if (lagTime >= 0) {
+                Thread.sleep(lagTime)
+            } else {
+                LOG.info("Tick is lagging behind ${abs(lagTime)} ms")
+            }
         }
 
         tickLoopWorker.onDestroy()
@@ -61,5 +68,7 @@ class TickLoopWorkerVerticle(
     companion object {
         private const val TICK_INTERVAL: Long = 1000
         private const val SHUTDOWN_TIMEOUT: Long = 2000
+
+        private val LOG = Logger.getLogger(TickLoopWorkerVerticle::class.java)
     }
 }

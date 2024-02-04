@@ -14,6 +14,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
+private const val TICK_INTERVAL: Long = 1000
+private const val SHUTDOWN_TIMEOUT: Long = 2000
+
 @ApplicationScoped
 class TickLoopWorkerLifecycle(
     private val vertx: Vertx,
@@ -63,10 +66,5 @@ class TickLoopWorkerVerticle(
     fun destroy() {
         isRunning.set(false)
         shutdownQueue.poll(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)
-    }
-
-    companion object {
-        private const val TICK_INTERVAL: Long = 1000
-        private const val SHUTDOWN_TIMEOUT: Long = 2000
     }
 }

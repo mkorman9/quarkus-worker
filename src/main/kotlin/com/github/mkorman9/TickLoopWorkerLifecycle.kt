@@ -17,24 +17,24 @@ import kotlin.math.abs
 @ApplicationScoped
 class TickLoopWorkerLifecycle(
     private val vertx: Vertx,
-    tickLoopWorker: TickLoopWorker
+    private val tickLoopWorkerVerticle: TickLoopWorkerVerticle
 ) {
-    private val verticle = TickLoopWorkerVerticle(tickLoopWorker)
-
     fun onStartup(@Observes startupEvent: StartupEvent) {
         vertx.deployVerticle(
-            verticle,
+            tickLoopWorkerVerticle,
             DeploymentOptions()
                 .setThreadingModel(ThreadingModel.WORKER)
         )
     }
 
     fun onShutdown(@Observes shutdownEvent: ShutdownEvent) {
-        verticle.destroy()
+        tickLoopWorkerVerticle.destroy()
     }
 }
 
+@ApplicationScoped
 class TickLoopWorkerVerticle(
+    private val log: Logger,
     private val tickLoopWorker: TickLoopWorker
 ) : AbstractVerticle() {
     private val isRunning = AtomicBoolean(true)
@@ -52,7 +52,7 @@ class TickLoopWorkerVerticle(
             if (lagTime >= 0) {
                 Thread.sleep(lagTime)
             } else {
-                LOG.info("Tick is lagging behind ${abs(lagTime)} ms")
+                log.info("Tick is lagging behind ${abs(lagTime)} ms")
             }
         }
 
@@ -68,7 +68,5 @@ class TickLoopWorkerVerticle(
     companion object {
         private const val TICK_INTERVAL: Long = 1000
         private const val SHUTDOWN_TIMEOUT: Long = 2000
-
-        private val LOG = Logger.getLogger(TickLoopWorkerVerticle::class.java)
     }
 }

@@ -44,11 +44,21 @@ class TickLoopWorkerVerticle(
     private val shutdownQueue = SynchronousQueue<Boolean>()
 
     override fun start() {
-        tickLoopWorker.onInit()
+        try {
+            tickLoopWorker.onInit()
+        } catch (e: Exception) {
+            log.error("Exception in init handler", e)
+        }
 
         while (isRunning.get()) {
             val beforeTickTime = System.currentTimeMillis()
-            tickLoopWorker.onTick()
+
+            try {
+                tickLoopWorker.onTick()
+            } catch (e: Exception) {
+                log.error("Exception in tick handler", e)
+            }
+
             val tickTime = System.currentTimeMillis() - beforeTickTime
             val lagTime = TICK_INTERVAL - tickTime
 
@@ -59,7 +69,12 @@ class TickLoopWorkerVerticle(
             }
         }
 
-        tickLoopWorker.onDestroy()
+        try {
+            tickLoopWorker.onDestroy()
+        } catch (e: Exception) {
+            log.error("Exception in destroy handler", e)
+        }
+
         shutdownQueue.offer(true)
     }
 

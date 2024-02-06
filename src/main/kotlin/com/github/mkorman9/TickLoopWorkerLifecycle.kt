@@ -11,11 +11,10 @@ import jakarta.enterprise.event.Observes
 import org.jboss.logging.Logger
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
 private const val TICK_INTERVAL: Long = 1000
-private const val SHUTDOWN_TIMEOUT: Long = 2000
+private const val SHUTDOWN_TIMEOUT: Long = 2500
 
 @ApplicationScoped
 class TickLoopWorkerLifecycle(
@@ -40,7 +39,7 @@ class TickLoopWorkerVerticle(
     private val log: Logger,
     private val tickLoopWorker: TickLoopWorker
 ) : AbstractVerticle() {
-    private val isRunning = AtomicBoolean(true)
+    private var isRunning = true
     private val shutdownQueue = SynchronousQueue<Boolean>()
 
     override fun start() {
@@ -50,7 +49,7 @@ class TickLoopWorkerVerticle(
             log.error("Exception in init handler", e)
         }
 
-        while (isRunning.get()) {
+        while (isRunning) {
             val beforeTickTime = System.currentTimeMillis()
 
             try {
@@ -79,7 +78,7 @@ class TickLoopWorkerVerticle(
     }
 
     fun destroy() {
-        isRunning.set(false)
+        isRunning = false
         shutdownQueue.poll(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)
     }
 }

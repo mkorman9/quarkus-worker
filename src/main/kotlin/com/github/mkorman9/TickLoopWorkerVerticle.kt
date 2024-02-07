@@ -29,7 +29,7 @@ class TickLoopWorkerVerticle(
         vertxInstance.deployVerticle(
             this,
             DeploymentOptions()
-                .setThreadingModel(ThreadingModel.WORKER)
+                .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
         )
     }
 

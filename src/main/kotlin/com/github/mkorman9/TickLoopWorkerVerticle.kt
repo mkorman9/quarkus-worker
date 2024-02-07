@@ -39,12 +39,6 @@ class TickLoopWorkerVerticle(
     }
 
     override fun start() {
-        try {
-            tickLoopWorker.onInit()
-        } catch (e: Exception) {
-            log.error("Exception in init handler", e)
-        }
-
         while (isRunning) {
             val beforeTickTime = System.currentTimeMillis()
 
@@ -62,12 +56,6 @@ class TickLoopWorkerVerticle(
             } else {
                 log.info("Tick is lagging behind ${abs(lagTime)} ms")
             }
-        }
-
-        try {
-            tickLoopWorker.onDestroy()
-        } catch (e: Exception) {
-            log.error("Exception in destroy handler", e)
         }
 
         shutdownQueue.offer(true)

@@ -17,30 +17,26 @@ private const val TICK_INTERVAL: Long = 1000
 private const val SHUTDOWN_TIMEOUT: Long = 2500
 
 @ApplicationScoped
-class TickLoopWorkerLifecycle(
-    private val vertx: Vertx,
-    private val tickLoopWorkerVerticle: TickLoopWorkerVerticle
-) {
+class TickLoopWorkerVerticle(
+    private val log: Logger,
+    private val vertxInstance: Vertx,
+    private val tickLoopWorker: TickLoopWorker
+) : AbstractVerticle() {
+    private var isRunning = true
+    private val shutdownQueue = SynchronousQueue<Boolean>()
+
     fun onStartup(@Observes startupEvent: StartupEvent) {
-        vertx.deployVerticle(
-            tickLoopWorkerVerticle,
+        vertxInstance.deployVerticle(
+            this,
             DeploymentOptions()
                 .setThreadingModel(ThreadingModel.WORKER)
         )
     }
 
     fun onShutdown(@Observes shutdownEvent: ShutdownEvent) {
-        tickLoopWorkerVerticle.destroy()
+        isRunning = false
+        shutdownQueue.poll(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)
     }
-}
-
-@ApplicationScoped
-class TickLoopWorkerVerticle(
-    private val log: Logger,
-    private val tickLoopWorker: TickLoopWorker
-) : AbstractVerticle() {
-    private var isRunning = true
-    private val shutdownQueue = SynchronousQueue<Boolean>()
 
     override fun start() {
         try {
@@ -75,10 +71,5 @@ class TickLoopWorkerVerticle(
         }
 
         shutdownQueue.offer(true)
-    }
-
-    fun destroy() {
-        isRunning = false
-        shutdownQueue.poll(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)
     }
 }

@@ -40,7 +40,7 @@ class TickLoopWorkerVerticle(
 
     override fun start() {
         while (isRunning) {
-            val beforeTickTime = System.currentTimeMillis()
+            val tickStartTime = System.currentTimeMillis()
 
             try {
                 tickLoopWorker.onTick()
@@ -48,13 +48,13 @@ class TickLoopWorkerVerticle(
                 log.error("Exception in tick handler", e)
             }
 
-            val tickTime = System.currentTimeMillis() - beforeTickTime
-            val lagTime = TICK_INTERVAL - tickTime
+            val elapsedTickTime = System.currentTimeMillis() - tickStartTime
+            val timeUntilNextTick = TICK_INTERVAL - elapsedTickTime
 
-            if (lagTime >= 0) {
-                Thread.sleep(lagTime)
+            if (timeUntilNextTick >= 0) {
+                Thread.sleep(timeUntilNextTick)
             } else {
-                log.info("Tick is lagging behind ${abs(lagTime)} ms")
+                log.info("Tick is lagging behind ${abs(timeUntilNextTick)} ms")
             }
         }
 
